@@ -8,7 +8,7 @@
 |_| \_| |_| |_|    V   |___|
 ```
 
-# NAVI 1.1.0: Windows installer
+# NAVI 1.2.0: Windows installer
 
 NAVI is a privacy-tuned web browser for Windows, with a black-and-white terminal-style theme and its own name and logos.
 Its interface is in French.
@@ -22,29 +22,35 @@ Its interface is in French.
   - **navi-claude**, the local bridge that lets Claude, on the same computer, drive NAVI;
   - **hello**, a sample extension.
 - **Installed on first start from addons.mozilla.org** (not bundled in the installer, signed by Mozilla, updated
-  automatically):
-  - **uBlock Origin**, ad blocker, by Raymond Hill;
-  - **Proton VPN**, Proton AG's official extension, **off** until you connect it with your Proton account.
+  automatically): **uBlock Origin**, ad blocker, by Raymond Hill.
+- **Downloaded by the installer from torproject.org and verified** (not bundled in the installer): **Tor** (the
+  official Tor Expert Bundle), for the **[tor]** toolbar button. Off by default, no account needed.
 - Modern websites, Firefox extensions, the password manager and the developer tools work as in Firefox.
 
-**NAVI is not made or endorsed by Mozilla, by Proton AG, or by the author of uBlock Origin.** Firefox is a trademark of
-the Mozilla Foundation; Proton VPN is a trademark of Proton AG.
+**NAVI is not made or endorsed by Mozilla, by the Tor Project, or by the author of uBlock Origin.** Firefox is a
+trademark of the Mozilla Foundation; "Tor" is a trademark of the Tor Project.
 
-## What's new in 1.1.0
+## What's new in 1.2.0
+
+- **[tor] button**: one click routes all of NAVI through the Tor network, **no account**. Websites see a Tor exit
+  address, not your IP. See "[tor] button" below for what it does and does **not** guarantee.
+- **Proton VPN removed** (it needed a Proton account): 1.2.0 uninstalls it from existing profiles and blocks it.
+- One less request at startup (Proton's server count).
+
+## What was new in 1.1.0
 
 - **NAVI name and logos everywhere** (see "Debranding"), honest About box: "Engine: Gecko, by Mozilla".
 - **Dangerous sites blocked**: Google Safe Browsing enabled (phishing, malware, unwanted software), **without** sending
   downloaded files to Google.
 - **HTTPS-Only**, HTTP downloads from HTTPS pages blocked, every downloaded file scanned by the Windows antivirus.
 - **Ad blocker**: uBlock Origin, in private browsing too.
-- **Proton VPN** ready, on or off as you choose (toolbar button).
 - Extensions now update themselves.
 
 ## Download and verify
 
 | File | Purpose |
 |---|---|
-| `NAVI-Setup.exe` | the installer (about 175 KB) |
+| `NAVI-Setup.exe` | the installer (about 185 KB) |
 | `SHA256SUMS.txt` | its SHA-256 hash |
 
 To check the file, open PowerShell in the download folder and type:
@@ -62,7 +68,9 @@ To run it anyway: **More info**, then **Run anyway**. Only do so if the hash mat
 
 - Windows 10 or 11, 64-bit.
 - No administrator rights: everything is installed for your account only.
-- An Internet connection during installation (about 100 MB downloaded from Mozilla) and about 400 MB of disk space.
+- An Internet connection during installation (about 100 MB from Mozilla, about 20 MB from torproject.org) and about
+  450 MB of disk space.
+- Optional: **gpg** (Git for Windows includes one) so the installer can also check the OpenPGP signature of Tor.
 - PowerShell 5.1 and .NET Framework 4, already part of Windows.
 - **Python 3**, only for the Claude bridge. The browser works without it.
   The installer tells you if it is missing: <https://www.python.org/downloads/>, ticking "Add python.exe to PATH".
@@ -92,14 +100,39 @@ To run it anyway: **More info**, then **Run anyway**. Only do so if the hash mat
 11. It registers the Claude bridge in `HKCU\Software\Mozilla\NativeMessagingHosts\navi_bridge` (your account's key, no
     admin rights) and tells you whether Python 3 is present.
 
-On first start, Firefox installs uBlock Origin and Proton VPN from addons.mozilla.org (`ExtensionSettings` enterprise
-policy): both are allowed in private browsing and pinned to the toolbar. Proton VPN opens its local welcome page once
-(crash reports unticked by default).
+12. **Tor**: it finds the latest stable Tor Expert Bundle (Windows x86_64) on `dist.torproject.org`, downloads it with
+    `sha256sums-signed-build.txt`, and checks **before extracting** that the archive's SHA-256 matches. If gpg is
+    present, it also checks the OpenPGP signature of that file against the "Tor Browser Developers" key
+    `EF6E286DDA85EA2A4BA7DE684E2C6E8793298290` (fingerprint pinned in `build\install-tor.ps1`, public key fetched from
+    `keys.openpgp.org` into a temporary keyring). A version older than the installed one is refused. It extracts to
+    `tor\` in the NAVI folder and writes what was checked to `tor\VERIFICATION.txt`. **If this step fails, NAVI is
+    installed anyway** and the [tor] button stays greyed out with a message.
 
-Why Proton VPN is allowed in private browsing: it routes traffic through the browser-wide proxy setting
-(`proxy.settings`), which Firefox only lets extensions with private-browsing access change; without that permission the
-extension itself asks for it and private windows would not go through the VPN. While the VPN is off, this permission
-lets it see nothing more than the pages you open.
+On first start, Firefox installs uBlock Origin from addons.mozilla.org (`ExtensionSettings` enterprise policy), allowed
+in private browsing and pinned to the toolbar. Proton VPN (`vpn@proton.ch`, installed by 1.1.0) is set to `blocked`:
+Firefox uninstalls it.
+
+## [tor] button
+
+`[tor]` off, `[tor..]` connecting, `[TOR]` on, `[TOR!]` Tor stopped unexpectedly.
+
+- **What it does**: starts `tor.exe` (hidden, client only, no control port, no relay) only when you click, waits until
+  Tor is fully bootstrapped (100 %), then sets NAVI's proxy to Tor's local SOCKS port. Websites see a Tor exit address,
+  not your IP. Site names are resolved by Tor (`socks_remote_dns`), not by your system's DNS. WebRTC is switched off
+  while Tor is on, so a video call cannot reveal your IP. Private windows go through Tor too, and so do the browser's own
+  requests (Mozilla lists, Safe Browsing, version alert, extension updates). Clicking again stops Tor and restores
+  **exactly** the previous network settings; closing NAVI stops it too, and Tor quits by itself if NAVI crashes.
+- **Fail-closed**: if `tor.exe` dies while the button is on, the proxy stays in place, pages fail to load and a red bar
+  says so. NAVI **never** silently falls back to a direct connection: it also goes offline, and Firefox's
+  `network.proxy.allow_bypass` and `network.proxy.failover_direct` are locked to false. By default Firefox retries
+  **directly** when the proxy fails (Remote Settings does): this was seen in testing, fixed and re-checked.
+- **Off at every start**: silently starting Tor at startup would be a surprise.
+- **What it does NOT guarantee**: NAVI is **not Tor Browser**. Your browser fingerprint (window size, fonts,
+  extensions, settings) stays recognizable; cookies and logins are NAVI's own. **Do not log into your personal accounts
+  if you want to stay anonymous.** It is slower, and some sites block Tor or show captchas. Tabs already open when you
+  click must be reloaded. For serious anonymity, use Tor Browser.
+- **Verification limit**: `tor.exe` in the Tor Expert Bundle has **no** Authenticode signature (checked on 16.0.1).
+  Without gpg, only the SHA-256 published over HTTPS by torproject.org is checked.
 
 ## Debranding
 
@@ -126,28 +159,29 @@ What remains, honestly:
 |---|---|---|
 | `product-details.mozilla.org` | once | a GET of the public list of Firefox versions |
 | `archive.mozilla.org` | once (unless the engine is already up to date) | two GETs: the Firefox installer (about 96 MB) and `SHA256SUMS` |
+| `dist.torproject.org` | once (unless Tor is already up to date) | GETs: the release listings, the Tor Expert Bundle (about 20 MB), `sha256sums-signed-build.txt` and its `.asc` |
+| `keys.openpgp.org` | once, only if gpg is present | the public key of the Tor Browser Developers (by pinned fingerprint) |
 
 These are ordinary HTTPS requests. The server sees your IP address and the "PowerShell" agent. No identifier is sent.
 
 ### While browsing
 
 Real measurement: NAVI freshly installed by this installer, new profile, left **idle for 30 minutes**
-(185 requests, **all within the first 36 seconds**, then nothing for 29.5 minutes; 13 TCP connections, all to the servers below).
+with the [tor] button off (198 requests, **all within the first 36 seconds**, then nothing for 29.5 minutes; 11 TCP connections, all to the servers below; no `tor.exe` started).
 
 | Domain | When | Why / what is sent |
 |---|---|---|
 | `firefox.settings.services.mozilla.com` | on first start, then every 24 h | Remote Settings: signed security lists (CRLite revocations, tracking protection, dangerous extensions…). 43 requests. |
-| `firefox-settings-attachments.cdn.mozilla.net` | same | the files of those lists: about 20 MB on first start, then a few hundred KB. 82 requests. |
+| `firefox-settings-attachments.cdn.mozilla.net` | same | the files of those lists: about 20 MB on first start, then a few hundred KB. 98 requests. |
 | `content-signature-2.cdn.mozilla.net` | same | certificates that check each list's signature (a tampered list is refused). 40 requests. |
 | `product-details.mozilla.org` | once per start | version alert: public list of Firefox versions, no cookie, no cache. 1 request. |
 | `safebrowsing.googleapis.com` | at start, then about every 30 min | Google Safe Browsing v5: update of the hash-prefix lists (Firefox's public API key is in the URL). 1 request in the measured window. Plus a full-hash request when a visited address matches a prefix. |
-| `addons.mozilla.org` | on first start | download of uBlock Origin and Proton VPN (files signed by Mozilla). 2 requests (+ redirects). |
-| `versioncheck-bg.addons.mozilla.org` | on first start, then once a day | extension updates: the ID and version of each AMO extension, the engine version. 2 requests. |
+| `addons.mozilla.org` | on first start | download of uBlock Origin (file signed by Mozilla). |
+| `versioncheck-bg.addons.mozilla.org` | on first start, then once a day | extension updates: the ID and version of each AMO extension, the engine version. 1 request. |
 | `ublockorigin.github.io`, `ublockorigin.pages.dev`, `cdn.jsdelivr.net`, `filters.adtidy.org`, `pgl.yoyo.org`, `malware-filter.gitlab.io`, `publicsuffix.org` | on first start, then when a list expires (usually every few days) | uBlock Origin: download of its filter lists. 13 requests. |
-| `account.proton.me` | each time the extension starts, **even with the VPN off** | Proton VPN: `GET /api/vpn/servers-count` (public server count), no account. 1 request. |
 | a site's certificate authority (OCSP) | when visiting a site whose certificate is not covered by CRLite | the serial of the checked certificate: the authority learns which site you visit |
 | the sites you open, and your search engine (DuckDuckGo by default) | when you use them | as in any browser; a search is only sent when you press Enter |
-| `account.proton.me` and Proton's VPN servers | **only if you turn Proton VPN on** | your account login, then all your web traffic goes through Proton (that is the point) |
+| Tor relays (guard, middle, exit) | **only while the [tor] button is on** | all NAVI traffic, encrypted into the Tor network; sites only see the exit relay's address |
 
 These requests carry no cookie and no NAVI identifier. Each server sees your IP address, the engine version and ordinary
 fingerprinting elements (Firefox's TLS/HTTP headers).
@@ -169,8 +203,7 @@ fingerprinting elements (Firefox's TLS/HTTP headers).
   refused; the other 2 (SSL.com EV, DigiCert G5) were accepted, even with OCSP enabled.
 - **The installer is not signed**: SmartScreen warning. Check the SHA-256 hash.
 - **Task Manager still shows "Firefox"** (see "Debranding").
-- **Proton VPN needs a Proton account** (free or paid), which you create yourself at Proton. NAVI does not create or
-  connect it for you. While off, it protects nothing.
+- **[tor] is not Tor Browser**: it hides your IP from sites, not your identity (see "[tor] button").
 - **No automatic engine updates.** NAVI warns you at startup when a newer Firefox exists (red bar and dialog), or if it
   could not check. To update, run the installer again. Extensions, on the other hand, update themselves.
 - **Strict tracking protection can break some sites**: add an exception with the shield in the address bar. Same for
@@ -193,7 +226,8 @@ powershell -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\NAVI\build\uninstall
 ```
 
 The script asks for confirmation, then whether to delete the profile too (bookmarks, passwords, history).
-It removes the folder, the Desktop and Start menu shortcuts and the `navi_bridge` key, only if they point to that folder.
+It stops NAVI's `tor.exe` if one is still running, then removes the folder (including `tor\`), the Desktop and Start
+menu shortcuts and the `navi_bridge` key, only if they point to that folder.
 Options: `-KeepProfile` keeps `profile\`; `-Yes` deletes without asking (profile included, unless `-KeepProfile`).
 
 ## Unattended install
@@ -209,7 +243,9 @@ For deployment, these environment variables replace the questions:
 
 Taken on a new profile, right after installation (the interface is in French).
 
-![NAVI new tab, with uBlock Origin, Proton VPN and [>_] in the toolbar](captures/nouvel-onglet.png)
+![NAVI new tab, with [tor], [>_] and uBlock Origin in the toolbar](captures/nouvel-onglet.png)
+
+![The [tor] button on: check.torproject.org confirms Tor is used](captures/tor-actif.png)
 
 ![NAVI About box](captures/a-propos.png)
 

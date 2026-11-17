@@ -8,13 +8,14 @@
 |_| \_| |_| |_|    V   |___|
 ```
 
-# NAVI 1.2.0 : installeur Windows
+# NAVI 1.2.1 : installeur Windows
 
 NAVI est un navigateur web pour Windows, réglé pour la vie privée, avec un thème noir et blanc façon terminal et son
 propre nom et ses propres logos.
 
 - **Moteur** : Gecko, le moteur de Firefox, **par Mozilla**. L'installeur ne contient **pas** Firefox : il télécharge la
-  version officielle chez Mozilla au moment de l'installation, vérifie son empreinte et sa signature, et ne la modifie pas.
+  version officielle chez Mozilla au moment de l'installation, vérifie son empreinte et sa signature, et ne la modifie pas
+  (une copie nommée `navi.exe` porte seulement le nom et l'icône NAVI : voir « navi.exe »).
 - **Fait maison** : la configuration, le nom et les logos NAVI, le thème, la page de nouvel onglet, les pages NAVI et
   quatre extensions :
   - **NAVI Shield**, un bloqueur de traqueurs 100 % local, actif dès la première seconde et hors ligne ;
@@ -30,6 +31,19 @@ propre nom et ses propres logos.
 
 **NAVI n'est ni fait ni soutenu par Mozilla, ni par le Tor Project, ni par l'auteur d'uBlock Origin.** Firefox est une
 marque de la Mozilla Foundation ; « Tor » est une marque du Tor Project.
+
+## Nouveautés de la 1.2.1
+
+- **Nouvelle page d'accueil** : disposition aérée et lisible, en colonne centrée (recherche, statistiques, sites
+  fréquents en tuiles alignées aux libellés entiers, barre de favoris, liens), lisible à 100 % de zoom de 1024×768 à
+  1920×1080.
+- **Statistiques locales, comme dans Brave** : traqueurs et pubs bloqués (vrai comptage local des requêtes bloquées par
+  NAVI Shield, uBlock Origin et la protection anti-pistage de Firefox, fenêtres privées comprises), bande passante
+  économisée et temps gagné (deux estimations documentées). Seuls des totaux sont gardés dans le profil : aucune
+  adresse, aucun nom de site, **rien n'est envoyé**. Voir « Statistiques de la page d'accueil ».
+- **« NAVI » dans le Gestionnaire des tâches** au lieu de « Firefox », processus enfants compris, grâce à `navi.exe`,
+  une copie de `firefox.exe` dont seuls le nom et l'icône changent. Compromis : `navi.exe` **n'est pas signé**. Voir
+  « navi.exe ».
 
 ## Nouveautés de la 1.2.0
 
@@ -52,7 +66,7 @@ marque de la Mozilla Foundation ; « Tor » est une marque du Tor Project.
 
 | Fichier | Rôle |
 |---|---|
-| `NAVI-Setup.exe` | l'installeur (environ 185 Ko) |
+| `NAVI-Setup.exe` | l'installeur (environ 195 Ko) |
 | `SHA256SUMS.txt` | son empreinte SHA-256 |
 
 Pour vérifier le fichier, ouvre PowerShell dans le dossier du téléchargement et tape :
@@ -97,8 +111,9 @@ Ne le fais que si l'empreinte correspond.
 8. Il remplace le moteur sans jamais perdre celui qui marche (copie à part, puis deux renommages ; retour à l'ancien en
    cas d'échec ou de coupure).
 9. Il applique la configuration NAVI à côté du moteur : `policies.json`, `autoconfig.js`, `navi.cfg` (obligatoires,
-   vérifiés au SHA-256 près) et le dossier `navi-branding\` (nom et logos).
-10. Il crée le raccourci **NAVI** sur le Bureau, dans le menu Démarrer et dans le dossier d'installation, avec l'icône NAVI
+   vérifiés au SHA-256 près) et le dossier `navi-branding\` (nom et logos). Puis il fabrique `navi.exe` (voir
+   « navi.exe ») et note son SHA-256.
+10. Il crée le raccourci **NAVI** (vers `navi.exe`) sur le Bureau, dans le menu Démarrer et dans le dossier d'installation, avec l'icône NAVI
     et l'identifiant Windows de NAVI (pour que l'épingle de la barre des tâches s'appelle NAVI). Il ne déclare **pas** NAVI
     comme navigateur par défaut.
 11. Il enregistre le pont Claude dans `HKCU\Software\Mozilla\NativeMessagingHosts\navi_bridge` (clé de ton compte, sans
@@ -149,14 +164,57 @@ illustration du renard retirée des pages d'erreur, menu Aide sans les services 
 
 Ce qui reste, honnêtement :
 
-- **Le Gestionnaire des tâches affiche « Firefox »** : c'est le nom inscrit dans le programme signé par Mozilla, qu'on ne
-  modifie pas (sa signature est vérifiée).
+- `crashhelper.exe`, petit programme de Mozilla qui surveille les plantages, garde son nom dans le Gestionnaire des tâches.
 - **Le User-Agent reste celui de Firefox** : le changer te rendrait plus facile à reconnaître et casserait des sites.
 - La boîte À propos dit « Moteur : Gecko, par Mozilla » et la mention légale « Firefox est une marque de la Mozilla
   Foundation ».
 - Quelques textes de Firefox citent Mozilla parce qu'ils parlent vraiment de Mozilla (réglages de télémétrie, coupés et
   verrouillés ; « Rechercher sur addons.mozilla.org » ; page des licences), une infobulle d'about:addons dit encore
   « Firefox ne recommande que… », et `about:policies` liste les noms techniques des politiques (`DisableFirefoxStudies`…).
+
+## navi.exe
+
+Windows affiche la **description de fichier** d'un programme ; celle de `firefox.exe` est « Firefox ». Pour afficher
+« NAVI », l'installeur (`build\apply-windows.ps1`, avec `build\navi-exe.cs` compilé par le compilateur C# du .NET
+Framework de Windows) :
+
+1. vérifie d'abord `firefox.exe` exactement comme avant (SHA-256 de l'installeur Firefox, signature Authenticode
+   « Mozilla Corporation » de l'installeur et des fichiers extraits) ;
+2. en fait une copie `engine\navi.exe` dont il réécrit **seulement** les chaînes de version `FileDescription`,
+   `ProductName` (NAVI), `InternalName` (navi), `OriginalFilename` (navi.exe) et l'icône principale, avec les API
+   Windows `BeginUpdateResource` / `UpdateResource` / `EndUpdateResource`. Le code, les autres ressources, le numéro de
+   version, `CompanyName` (Mozilla Corporation) et le copyright ne changent pas ;
+3. **le compromis** : un fichier modifié ne peut plus porter la signature de Mozilla. Le certificat est retiré (une
+   signature cassée serait pire) : `navi.exe` est **non signé**. L'installeur note son SHA-256 et celui du `firefox.exe`
+   d'origine dans `engine\navi.exe.sha256` et les revérifie à chaque installation ou mise à jour. Le même `firefox.exe`
+   donne toujours le même `navi.exe`, au bit près. `firefox.exe` reste intact et signé, à côté.
+
+Les raccourcis et `NAVI.cmd` lancent `navi.exe`. Firefox relance **son propre exécutable** pour ses processus enfants
+(onglets, réseau, décodage, utilitaires) : ils s'affichent tous « NAVI » ; `tor.exe` est lancé par `navi.exe`. Vérifié :
+sandbox des processus de contenu toujours active (niveau 9), 0 erreur de politique, 5 extensions, navigation privée,
+pont Claude, [tor], fermeture propre ; aucun événement Windows Defender ni SmartScreen au lancement de `navi.exe`
+(fichier fabriqué sur place, sans marque « venu d'Internet »). Un antivirus tiers pourrait se méfier d'un exécutable non
+signé.
+
+## Statistiques de la page d'accueil
+
+Trois chiffres, comme dans le nouvel onglet de Brave. **Tout est local** : rien n'est envoyé ; seuls des totaux sont
+gardés (préférences `navi.stats.*` du profil), jamais une adresse ni un nom de site. `[x] remettre à zéro` les efface.
+
+- **Traqueurs et pubs bloqués** : un vrai comptage. `navi.cfg` observe la fin de chaque requête HTTP(S) et compte celles
+  que Firefox marque comme bloquées : annulées par une extension (NAVI Shield, uBlock Origin) ou par la protection
+  anti-pistage de Firefox. Fenêtres privées comprises. Chaque requête comptée une fois. Une requête **redirigée** par
+  uBlock Origin vers un substitut local n'est pas un blocage et n'est pas comptée. Testé avec une page locale et un faux
+  proxy local (aucune requête vers un vrai traqueur) : le compteur augmente exactement du nombre de requêtes bloquées,
+  les requêtes autorisées ne comptent pas, idem en fenêtre privée, et aucune adresse n'est stockée.
+- **Bande passante économisée (estimation)** : `scripts × 25,5 Ko + images × 58,6 Ko + autres × 37,4 Ko` (pings et
+  beacons : 0). Constantes = poids médian d'une page ÷ nombre médian de requêtes, pages de bureau, octobre 2024, d'après
+  le [Web Almanac 2024 de HTTP Archive, chapitre Page Weight](https://almanac.httparchive.org/en/2024/page-weight) :
+  JavaScript 613 Ko pour 24 requêtes ; images 1 054 Ko pour 18 ; toutes ressources 2 652 Ko pour 71. Une moyenne
+  grossière.
+- **Temps gagné (estimation)** : `requêtes bloquées × 50 ms`, la constante `MILLISECONDS_PER_ITEM` du nouvel onglet de
+  Brave ([brave-core, `stats.tsx`](https://github.com/brave/brave-core/blob/master/components/brave_new_tab_ui/containers/newTab/stats.tsx)).
+  Pas une mesure.
 
 ## Les domaines contactés
 
@@ -210,7 +268,7 @@ les fichiers téléchargés ne part chez Google.**
 - **CRLite n'est pas une protection complète contre les certificats révoqués** : lors des essais, 3 certificats révoqués
   de test sur 5 ont été refusés ; les 2 autres (SSL.com EV, DigiCert G5) ont été acceptés, même avec OCSP actif.
 - **L'installeur n'est pas signé** : avertissement SmartScreen. Vérifie l'empreinte SHA-256.
-- **Le Gestionnaire des tâches affiche encore « Firefox »** (voir « Débrandage »).
+- **`navi.exe` n'est pas signé** (voir « navi.exe ») ; `firefox.exe`, à côté, l'est.
 - **[tor] n'est pas Tor Browser** : il cache ton IP aux sites, pas ton identité (voir « Bouton [tor] »).
 - **Pas de mises à jour automatiques du moteur.** NAVI t'alerte au démarrage quand un Firefox plus récent existe (bandeau
   rouge et fenêtre), ou s'il n'a pas pu vérifier. Pour mettre à jour, relance l'installeur. Les extensions, elles, se
@@ -249,6 +307,8 @@ Pour un déploiement, ces variables d'environnement remplacent les questions :
 - `NAVI_NOPAUSE=1` : pas de pause à la fin.
 
 ## Captures
+
+![Page d'accueil de NAVI 1.2.1 avec des statistiques de test](captures/accueil.png)
 
 Prises sur un profil neuf, juste après l'installation.
 

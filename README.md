@@ -8,13 +8,14 @@
 |_| \_| |_| |_|    V   |___|
 ```
 
-# NAVI 1.2.0: Windows installer
+# NAVI 1.2.1: Windows installer
 
 NAVI is a privacy-tuned web browser for Windows, with a black-and-white terminal-style theme and its own name and logos.
 Its interface is in French.
 
 - **Engine**: Gecko, Firefox's engine, **by Mozilla**. The installer does **not** contain Firefox: it downloads the
-  official release from Mozilla at install time, checks its hash and signature, and does not modify it.
+  official release from Mozilla at install time, checks its hash and signature, and does not modify it (a copy named
+  `navi.exe` only carries the NAVI name and icon: see "navi.exe").
 - **Home-made**: the configuration, the NAVI name and logos, the theme, the new tab page, the NAVI pages and four
   extensions:
   - **NAVI Shield**, a 100% local tracker blocker, active from the first second and offline;
@@ -30,7 +31,18 @@ Its interface is in French.
 **NAVI is not made or endorsed by Mozilla, by the Tor Project, or by the author of uBlock Origin.** Firefox is a
 trademark of the Mozilla Foundation; "Tor" is a trademark of the Tor Project.
 
-## What's new in 1.2.0
+## What's new in 1.2.1
+
+- **New home page**: airy, readable layout in a centred column (search, statistics, frequent sites as a grid of tiles
+  with full labels, bookmarks toolbar, links), readable at 100% zoom from 1024×768 to 1920×1080.
+- **Local statistics, like Brave's**: trackers and ads blocked (a real local count of requests blocked by NAVI Shield,
+  uBlock Origin and Firefox's tracking protection, private windows included), bandwidth saved and time saved (two
+  documented estimates). Only totals are kept in your profile: no address, no site name, **nothing is sent**.
+  See "Home page statistics".
+- **"NAVI" in the Task Manager** instead of "Firefox", child processes included, through `navi.exe`, a copy of
+  `firefox.exe` with only its name and icon changed. Trade-off: `navi.exe` is **not signed**. See "navi.exe".
+
+## What was new in 1.2.0
 
 - **[tor] button**: one click routes all of NAVI through the Tor network, **no account**. Websites see a Tor exit
   address, not your IP. See "[tor] button" below for what it does and does **not** guarantee.
@@ -50,7 +62,7 @@ trademark of the Mozilla Foundation; "Tor" is a trademark of the Tor Project.
 
 | File | Purpose |
 |---|---|
-| `NAVI-Setup.exe` | the installer (about 185 KB) |
+| `NAVI-Setup.exe` | the installer (about 195 KB) |
 | `SHA256SUMS.txt` | its SHA-256 hash |
 
 To check the file, open PowerShell in the download folder and type:
@@ -94,8 +106,9 @@ To run it anyway: **More info**, then **Run anyway**. Only do so if the hash mat
 8. It replaces the engine without ever losing the working one (separate copy, then two renames; back to the old one on
    failure or power cut).
 9. It applies the NAVI configuration next to the engine: `policies.json`, `autoconfig.js`, `navi.cfg` (mandatory,
-   checked byte for byte with SHA-256) and the `navi-branding\` folder (name and logos).
-10. It creates the **NAVI** shortcut on the Desktop, in the Start menu and in the install folder, with the NAVI icon and
+   checked byte for byte with SHA-256) and the `navi-branding\` folder (name and logos). Then it makes `navi.exe`
+   (see "navi.exe") and records its SHA-256.
+10. It creates the **NAVI** shortcut (to `navi.exe`) on the Desktop, in the Start menu and in the install folder, with the NAVI icon and
     NAVI's Windows identity (so a pinned taskbar item is called NAVI). It does **not** make NAVI the default browser.
 11. It registers the Claude bridge in `HKCU\Software\Mozilla\NativeMessagingHosts\navi_bridge` (your account's key, no
     admin rights) and tells you whether Python 3 is present.
@@ -143,13 +156,53 @@ pages, Help menu without Mozilla's services.
 
 What remains, honestly:
 
-- **Task Manager shows "Firefox"**: that is the name stored in the program signed by Mozilla, which is not modified
-  (its signature is checked).
+- `crashhelper.exe`, a small Mozilla program that watches for crashes, keeps its own name in the Task Manager.
 - **The User-Agent stays Firefox's**: changing it would make you easier to recognize and would break websites.
 - The About box says "Engine: Gecko, by Mozilla" and the legal line "Firefox is a trademark of the Mozilla Foundation".
 - A few Firefox texts mention Mozilla because they really are about Mozilla (telemetry settings, switched off and
   locked; "Search addons.mozilla.org"; the licenses page), one about:addons tooltip still says "Firefox only
   recommends…", and `about:policies` lists the technical policy names (`DisableFirefoxStudies`…).
+
+## navi.exe
+
+Windows shows a program's **file description**; `firefox.exe`'s is "Firefox". To show "NAVI", the installer
+(`build\apply-windows.ps1`, with `build\navi-exe.cs` compiled by the C# compiler of Windows' .NET Framework):
+
+1. first checks `firefox.exe` exactly as before (SHA-256 of the Firefox installer, Mozilla Corporation Authenticode
+   signature of the installer and of the extracted files);
+2. makes a copy, `engine\navi.exe`, and rewrites **only** its version strings `FileDescription`, `ProductName` (NAVI),
+   `InternalName` (navi), `OriginalFilename` (navi.exe) and its main icon, with the Windows API
+   `BeginUpdateResource` / `UpdateResource` / `EndUpdateResource`. Code, other resources, version number, `CompanyName`
+   (Mozilla Corporation) and copyright are unchanged;
+3. **the trade-off**: a modified file can no longer carry Mozilla's signature. The certificate is removed (a broken
+   signature would be worse), so `navi.exe` is **unsigned**. The installer records its SHA-256 and the source
+   `firefox.exe`'s in `engine\navi.exe.sha256` and checks them again at every install or update. The same
+   `firefox.exe` always gives the same `navi.exe`, bit for bit. `firefox.exe` stays untouched and signed, next to it.
+
+Shortcuts and `NAVI.cmd` start `navi.exe`. Firefox starts **its own executable** again for its child processes (tabs,
+network, decoding, utility), so they all show as "NAVI"; `tor.exe` is started by `navi.exe`. Checked: content sandbox
+still on (level 9), no policy error, 5 extensions, private browsing, Claude bridge, [tor], clean shutdown; no Windows
+Defender or SmartScreen event when `navi.exe` starts (the file is made locally, without a "downloaded from the Internet"
+mark). A third-party antivirus might distrust an unsigned executable.
+
+## Home page statistics
+
+Three numbers, like Brave's new tab. **All local**: nothing is sent; only totals are kept (preferences
+`navi.stats.*` in the profile), never an address or a site name. `[x] remettre à zéro` resets them.
+
+- **Trackers and ads blocked**: a real count. `navi.cfg` watches the end of every HTTP(S) request and counts those
+  Firefox marks as blocked: cancelled by an extension (NAVI Shield, uBlock Origin) or by Firefox's tracking protection.
+  Private windows included. Each request counted once. A request **redirected** by uBlock Origin to a local stand-in is
+  not a block and is not counted. Tested with a local page and a fake local proxy (no request to a real tracker): the
+  counter goes up by exactly the number of blocked requests, allowed requests are not counted, same in a private
+  window, and no address is stored.
+- **Bandwidth saved (estimate)**: `scripts × 25.5 kB + images × 58.6 kB + others × 37.4 kB` (pings and beacons: 0).
+  Constants = median page weight ÷ median number of requests, desktop pages, October 2024, from the
+  [HTTP Archive Web Almanac 2024, Page Weight chapter](https://almanac.httparchive.org/en/2024/page-weight):
+  JavaScript 613 kB over 24 requests; images 1,054 kB over 18; all resources 2,652 kB over 71. A rough average.
+- **Time saved (estimate)**: `blocked requests × 50 ms`, the `MILLISECONDS_PER_ITEM` constant of Brave's new tab
+  ([brave-core, `stats.tsx`](https://github.com/brave/brave-core/blob/master/components/brave_new_tab_ui/containers/newTab/stats.tsx)).
+  Not a measurement.
 
 ## Domains contacted
 
@@ -202,7 +255,7 @@ fingerprinting elements (Firefox's TLS/HTTP headers).
 - **CRLite is not complete protection against revoked certificates**: in tests, 3 of 5 revoked test certificates were
   refused; the other 2 (SSL.com EV, DigiCert G5) were accepted, even with OCSP enabled.
 - **The installer is not signed**: SmartScreen warning. Check the SHA-256 hash.
-- **Task Manager still shows "Firefox"** (see "Debranding").
+- **`navi.exe` is not signed** (see "navi.exe"); `firefox.exe` next to it is.
 - **[tor] is not Tor Browser**: it hides your IP from sites, not your identity (see "[tor] button").
 - **No automatic engine updates.** NAVI warns you at startup when a newer Firefox exists (red bar and dialog), or if it
   could not check. To update, run the installer again. Extensions, on the other hand, update themselves.
@@ -240,6 +293,8 @@ For deployment, these environment variables replace the questions:
 - `NAVI_NOPAUSE=1`: no pause at the end.
 
 ## Screenshots
+
+![NAVI 1.2.1 home page with test statistics](captures/accueil.png)
 
 Taken on a new profile, right after installation (the interface is in French).
 

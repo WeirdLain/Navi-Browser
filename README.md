@@ -8,7 +8,7 @@
 |_| \_| |_| |_|    V   |___|
 ```
 
-# NAVI 1.2.1: Windows installer
+# NAVI 1.2.2: Windows installer
 
 NAVI is a privacy-tuned web browser for Windows, with a black-and-white terminal-style theme and its own name and logos.
 Its interface is in French.
@@ -21,7 +21,7 @@ Its interface is in French.
   - **NAVI Shield**, a 100% local tracker blocker, active from the first second and offline;
   - **NAVI home**, the new tab page and the NAVI pages;
   - **navi-claude**, the local bridge that lets Claude, on the same computer, drive NAVI;
-  - **hello**, a sample extension.
+  - **hello**, a sample extension (not loaded by default since 1.2.2).
 - **Installed on first start from addons.mozilla.org** (not bundled in the installer, signed by Mozilla, updated
   automatically): **uBlock Origin**, ad blocker, by Raymond Hill.
 - **Downloaded by the installer from torproject.org and verified** (not bundled in the installer): **Tor** (the
@@ -31,7 +31,51 @@ Its interface is in French.
 **NAVI is not made or endorsed by Mozilla, by the Tor Project, or by the author of uBlock Origin.** Firefox is a
 trademark of the Mozilla Foundation; "Tor" is a trademark of the Tor Project.
 
-## What's new in 1.2.1
+## What's new in 1.2.2: less memory, less CPU
+
+Measured on the same PC (Windows 11, 32 GB RAM), NAVI 1.2.1 against 1.2.2, fresh profile each time, one copy running at
+a time, **median of 3 runs**. "Memory" = sum of the private memory (USS, as in `about:processes`) of all NAVI processes.
+CPU at rest = share of **one** core used while nothing happens (60 s).
+
+| Scenario | 1.2.1 | 1.2.2 | Change |
+|---|---|---|---|
+| Home page only, at rest: memory | 704 MB | 611 MB | **−13 %** |
+| Home page only: processes | 9 | 6 | −3 |
+| Home page only: CPU at rest | 9.4 % | 4.4 % | **−53 %** |
+| Time until the home page is ready | 1.18 s | 1.05 s | **−11 %** |
+| 10 local test pages (5 sites × 2): memory | 1,194 MB | 966 MB | **−19 %** |
+| same: processes / CPU at rest | 19 / 5.7 % | 11 / 1.4 % | −8 / **−75 %** |
+| same, after 10 min idle: memory | 1,155 MB | 927 MB | **−20 %** |
+| 10 real websites (*): memory | 1,539 MB | 1,396 MB | **−9 %** |
+| same: processes / CPU at rest | 21 / 6.0 % | 17 / 1.5 % | −4 / **−75 %** |
+| same, after 10 min idle: memory | 1,451 MB | 1,300 MB | **−10 %** |
+| Inactive tabs unloaded (3 tabs, separate test) | — | −159 MB | |
+
+(*) fr/en.wikipedia.org, news.ycombinator.com, old.reddit.com, github.com, developer.mozilla.org, duckduckgo.com,
+lemonde.fr, archlinux.org, rust-lang.org. Real sites change from one run to the next: these figures are noisier.
+**Test conditions**: copies run on a hidden Windows desktop, without a GPU (software rendering), so the CPU figures are
+higher than on a normal screen; your numbers will differ, the direction should not. The 30-minute unloading does not
+show up in the "after 10 min" lines.
+
+What changed (all defaults, changeable in `about:config`; **no security or privacy feature was turned off**: site
+isolation, sandbox, Safe Browsing, CRLite, uBlock Origin and NAVI Shield stay on):
+
+- **Tabs unused for 30 minutes are unloaded** (`navi.memory.unloadAfterMinutes`, 0 = never): the tab stays in the tab
+  bar and reloads when you click it (address, history and scroll position kept). Never the visible tab, pinned tabs,
+  tabs playing sound, picture-in-picture, video calls / screen sharing, private windows, a form being filled in, or a
+  page that asks before leaving.
+- **One process per site** instead of up to four (`dom.ipc.processCount.webIsolated` = 1). Sites stay isolated from
+  each other; a very heavy page can slow down other tabs **of the same site**.
+- **1 process prepared in advance** instead of 3, and Firefox's old home page process is no longer kept alive.
+- **Home page**: the logo "glitch" now runs 0.56 s every 7 s instead of keeping the display busy all the time; the page
+  shows as soon as its own extension is loaded.
+- **hello** (sample extension) is no longer loaded: it added a `[navi]` badge, readable by websites, to every https
+  page. **navi-claude** only adds its console capture to pages while the Claude bridge is connected.
+- Rejected after measuring (no gain, or a visible cost): smaller back/forward cache (back button 4× slower), image
+  cache and memory cache limits. Network prefetching was already off since 1.0.
+- Network: no new connection (30-minute idle audit, same list as 1.2.1).
+- Linux: not tested and not published; the plan is in `LINUX.md` in the NAVI folder.
+## What was new in 1.2.1
 
 - **New home page**: airy, readable layout in a centred column (search, statistics, frequent sites as a grid of tiles
   with full labels, bookmarks toolbar, links), readable at 100% zoom from 1024×768 to 1920×1080.

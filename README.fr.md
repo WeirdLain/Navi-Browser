@@ -8,7 +8,7 @@
 |_| \_| |_| |_|    V   |___|
 ```
 
-# NAVI 1.2.1 : installeur Windows
+# NAVI 1.2.2 : installeur Windows
 
 NAVI est un navigateur web pour Windows, réglé pour la vie privée, avec un thème noir et blanc façon terminal et son
 propre nom et ses propres logos.
@@ -21,7 +21,7 @@ propre nom et ses propres logos.
   - **NAVI Shield**, un bloqueur de traqueurs 100 % local, actif dès la première seconde et hors ligne ;
   - **NAVI accueil**, la page de nouvel onglet et les pages NAVI ;
   - **navi-claude**, le pont local qui permet à Claude, sur le même ordinateur, de piloter NAVI ;
-  - **hello**, un exemple d'extension.
+  - **hello**, un exemple d'extension (plus chargé par défaut depuis 1.2.2).
 - **Installé au premier démarrage depuis addons.mozilla.org** (pas inclus dans l'installeur, signé par Mozilla, mis à
   jour automatiquement) : **uBlock Origin**, bloqueur de pubs, de Raymond Hill.
 - **Téléchargé par l'installeur chez torproject.org et vérifié** (pas inclus dans l'installeur) : **Tor** (le Tor Expert
@@ -32,6 +32,50 @@ propre nom et ses propres logos.
 **NAVI n'est ni fait ni soutenu par Mozilla, ni par le Tor Project, ni par l'auteur d'uBlock Origin.** Firefox est une
 marque de la Mozilla Foundation ; « Tor » est une marque du Tor Project.
 
+## Nouveautés de la 1.2.2 : moins de mémoire, moins de processeur
+
+Mesuré sur le même PC (Windows 11, 32 Go de RAM), NAVI 1.2.1 contre 1.2.2, profil neuf à chaque fois, une seule copie
+lancée à la fois, **médiane de 3 essais**. « Mémoire » = somme de la mémoire propre (USS, comme dans `about:processes`)
+de tous les processus NAVI. Processeur au repos = part d'**un** cœur utilisée quand rien ne se passe (60 s).
+
+| Scénario | 1.2.1 | 1.2.2 | Écart |
+|---|---|---|---|
+| Page d'accueil seule, au repos : mémoire | 704 Mo | 611 Mo | **−13 %** |
+| Page d'accueil seule : processus | 9 | 6 | −3 |
+| Page d'accueil seule : processeur au repos | 9,4 % | 4,4 % | **−53 %** |
+| Temps jusqu'à la page d'accueil prête | 1,18 s | 1,05 s | **−11 %** |
+| 10 pages de test locales (5 sites × 2) : mémoire | 1 194 Mo | 966 Mo | **−19 %** |
+| idem : processus / processeur au repos | 19 / 5,7 % | 11 / 1,4 % | −8 / **−75 %** |
+| idem, après 10 min sans rien faire : mémoire | 1 155 Mo | 927 Mo | **−20 %** |
+| 10 vrais sites (*) : mémoire | 1 539 Mo | 1 396 Mo | **−9 %** |
+| idem : processus / processeur au repos | 21 / 6,0 % | 17 / 1,5 % | −4 / **−75 %** |
+| idem, après 10 min sans rien faire : mémoire | 1 451 Mo | 1 300 Mo | **−10 %** |
+| Onglets inactifs déchargés (3 onglets, test à part) | — | −159 Mo | |
+
+(*) fr/en.wikipedia.org, news.ycombinator.com, old.reddit.com, github.com, developer.mozilla.org, duckduckgo.com,
+lemonde.fr, archlinux.org, rust-lang.org. Les vrais sites changent d'un essai à l'autre : chiffres plus bruités.
+**Conditions** : copies lancées sur un bureau Windows caché, sans carte graphique (rendu logiciel), donc processeur plus
+sollicité que sur un écran normal ; tes chiffres seront différents, le sens de l'écart ne devrait pas l'être. Le
+déchargement à 30 min n'apparaît pas dans les lignes « après 10 min ».
+
+Ce qui change (valeurs par défaut, modifiables dans `about:config` ; **aucune protection de sécurité ou de vie privée
+coupée** : isolation des sites, bac à sable, Safe Browsing, CRLite, uBlock Origin et NAVI Shield restent actifs) :
+
+- **Onglets inutilisés depuis 30 min déchargés** (`navi.memory.unloadAfterMinutes`, 0 = jamais) : l'onglet reste dans
+  la barre et se recharge quand tu cliques dessus (adresse, historique et position gardés). Jamais l'onglet affiché, un
+  onglet épinglé, qui joue du son, en image dans l'image, en visio / partage d'écran, une fenêtre privée, un formulaire en
+  cours de saisie, ou une page qui demande confirmation avant de partir.
+- **Un processus par site** au lieu de quatre au plus (`dom.ipc.processCount.webIsolated` = 1). Les sites restent
+  isolés les uns des autres ; une page très lourde peut ralentir les autres onglets **du même site**.
+- **1 processus préparé d'avance** au lieu de 3, et le processus de l'ancienne page d'accueil de Firefox n'est plus gardé.
+- **Page d'accueil** : le « glitch » du logo tourne 0,56 s toutes les 7 s au lieu d'occuper l'affichage en continu ; la
+  page s'affiche dès que sa propre extension est chargée.
+- **hello** (extension d'exemple) n'est plus chargée : elle ajoutait à chaque page https un badge `[navi]` lisible par
+  les sites. **navi-claude** n'ajoute sa capture de console aux pages que pendant que le pont Claude est connecté.
+- Rejeté après mesure (aucun gain, ou un coût visible) : cache arrière/avant réduit (bouton retour 4× plus lent),
+  limites des caches d'images et mémoire. Les préchargements réseau étaient déjà coupés depuis la 1.0.
+- Réseau : aucune connexion en plus (audit de 30 min à vide, même liste qu'en 1.2.1).
+- Linux : ni testé ni publié ; le plan est dans `LINUX.md` du dossier NAVI.
 ## Nouveautés de la 1.2.1
 
 - **Nouvelle page d'accueil** : disposition aérée et lisible, en colonne centrée (recherche, statistiques, sites

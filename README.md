@@ -8,7 +8,7 @@
 |_| \_| |_| |_|    V   |___|
 ```
 
-# NAVI 1.2.2: Windows installer
+# NAVI 1.2.3: Windows installer
 
 NAVI is a privacy-tuned web browser for Windows, with a black-and-white terminal-style theme and its own name and logos.
 Its interface is in French.
@@ -31,7 +31,19 @@ Its interface is in French.
 **NAVI is not made or endorsed by Mozilla, by the Tor Project, or by the author of uBlock Origin.** Firefox is a
 trademark of the Mozilla Foundation; "Tor" is a trademark of the Tor Project.
 
-## What's new in 1.2.2: less memory, less CPU
+## What's new in 1.2.3: a cleaner project
+
+No feature or protection changed; the same engine (Firefox 160.0) and the same `navi.exe`.
+
+- NAVI no longer adds a "NAVI private browsing" shortcut to the Start menu: it started `private_browsing.exe`, which runs
+  `firefox.exe` (shown as "Firefox" in the Task Manager) instead of `navi.exe`.
+- Documentation gathered in a `docs` folder (privacy, security, extensions, Linux, theme), installed with NAVI, plus a
+  `CHANGELOG.md` and a single `VERSION` file.
+- Images recompressed without loss; smaller installer (199,680 bytes instead of 204,288).
+- Checked again: fresh install, update from 1.2.2 with the profile kept, uninstall, and a 30-minute idle network audit
+  (same domains as 1.2.2).
+
+## What was new in 1.2.2: less memory, less CPU
 
 Measured on the same PC (Windows 11, 32 GB RAM), NAVI 1.2.1 against 1.2.2, fresh profile each time, one copy running at
 a time, **median of 3 runs**. "Memory" = sum of the private memory (USS, as in `about:processes`) of all NAVI processes.
@@ -74,7 +86,7 @@ isolation, sandbox, Safe Browsing, CRLite, uBlock Origin and NAVI Shield stay on
 - Rejected after measuring (no gain, or a visible cost): smaller back/forward cache (back button 4× slower), image
   cache and memory cache limits. Network prefetching was already off since 1.0.
 - Network: no new connection (30-minute idle audit, same list as 1.2.1).
-- Linux: not tested and not published; the plan is in `LINUX.md` in the NAVI folder.
+- Linux: not tested and not published; the plan is in `docs/LINUX.md` in the NAVI folder.
 ## What was new in 1.2.1
 
 - **New home page**: airy, readable layout in a centred column (search, statistics, frequent sites as a grid of tiles

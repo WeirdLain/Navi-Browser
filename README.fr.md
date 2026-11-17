@@ -8,7 +8,7 @@
 |_| \_| |_| |_|    V   |___|
 ```
 
-# NAVI 1.2.2 : installeur Windows
+# NAVI 1.2.3 : installeur Windows
 
 NAVI est un navigateur web pour Windows, réglé pour la vie privée, avec un thème noir et blanc façon terminal et son
 propre nom et ses propres logos.
@@ -31,6 +31,18 @@ propre nom et ses propres logos.
 
 **NAVI n'est ni fait ni soutenu par Mozilla, ni par le Tor Project, ni par l'auteur d'uBlock Origin.** Firefox est une
 marque de la Mozilla Foundation ; « Tor » est une marque du Tor Project.
+
+## Nouveautés de la 1.2.3 : un projet rangé
+
+Aucune fonction ni protection changée ; même moteur (Firefox 160.0) et même `navi.exe`.
+
+- NAVI n'ajoute plus de raccourci « Navigation privée de NAVI » au menu Démarrer : il lançait `private_browsing.exe`,
+  qui démarre `firefox.exe` (affiché « Firefox » dans le Gestionnaire des tâches) au lieu de `navi.exe`.
+- Documentation regroupée dans un dossier `docs` (vie privée, sécurité, extensions, Linux, thème), installé avec NAVI,
+  plus un `CHANGELOG.md` et un fichier `VERSION` unique.
+- Images recompressées sans perte ; installeur plus léger (199 680 octets au lieu de 204 288).
+- Revérifié : installation neuve, mise à jour depuis 1.2.2 avec profil conservé, désinstallation, et audit réseau de
+  30 min à vide (mêmes domaines qu'en 1.2.2).
 
 ## Nouveautés de la 1.2.2 : moins de mémoire, moins de processeur
 
@@ -75,7 +87,7 @@ coupée** : isolation des sites, bac à sable, Safe Browsing, CRLite, uBlock Ori
 - Rejeté après mesure (aucun gain, ou un coût visible) : cache arrière/avant réduit (bouton retour 4× plus lent),
   limites des caches d'images et mémoire. Les préchargements réseau étaient déjà coupés depuis la 1.0.
 - Réseau : aucune connexion en plus (audit de 30 min à vide, même liste qu'en 1.2.1).
-- Linux : ni testé ni publié ; le plan est dans `LINUX.md` du dossier NAVI.
+- Linux : ni testé ni publié ; le plan est dans `docs/LINUX.md` du dossier NAVI.
 ## Nouveautés de la 1.2.1
 
 - **Nouvelle page d'accueil** : disposition aérée et lisible, en colonne centrée (recherche, statistiques, sites

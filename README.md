@@ -8,7 +8,7 @@
 |_| \_| |_| |_|    V   |___|
 ```
 
-# NAVI 1.2.3: Windows installer
+# NAVI 1.2.5: Windows installer
 
 NAVI is a privacy-tuned web browser for Windows, with a black-and-white terminal-style theme and its own name and logos.
 Its interface is in French.
@@ -31,7 +31,27 @@ Its interface is in French.
 **NAVI is not made or endorsed by Mozilla, by the Tor Project, or by the author of uBlock Origin.** Firefox is a
 trademark of the Mozilla Foundation; "Tor" is a trademark of the Tor Project.
 
-## What's new in 1.2.3: a cleaner project
+## What's new in 1.2.5: a real Windows browser, no Firefox install needed
+
+Also includes 1.2.4 (never published). Same Gecko engine (Firefox 160.0.1).
+
+- **Firefox does not need to be installed**: NAVI keeps its own engine in its folder (extracted from Mozilla's package,
+  never installed into Windows) and uses nothing from a Firefox present on the computer. Checked by running a copy of
+  NAVI **without even `firefox.exe`**: no file from an installed Firefox is loaded.
+- **Recognised by Windows as a browser, named NAVI**: Settings > Apps > **Default apps** (http, https, .htm, .html,
+  .shtml, .xht, .xhtml, .pdf), "Open with", **Installed apps** (publisher WeirdWired, uninstallable from there), `navi` in
+  Run (Win+R). Nothing is forced: you choose NAVI in Windows.
+- A link opened from another app goes to the running NAVI, or starts NAVI on **its own** profile.
+- Removed from the engine: Mozilla programs that announced themselves as "Firefox" to Windows and were not used by NAVI
+  (`helper.exe` uninstaller, maintenance service, default browser agent, updater, `pingsender`, `crashreporter`,
+  `private_browsing.exe`).
+- **Lighter Tor**: 74 → 34.5 MB (bridges and `tor-gencert` removed, NAVI does not use them; licences kept).
+- **Local-network HTTP guaranteed**: local IP addresses (127.x, 10.x, 192.168.x, 172.16-31.x: NAS, router, home servers)
+  stay on `http://`, never forced to https (locked setting, tested).
+- `navi.exe`: publisher WeirdWired and NAVI version in its properties.
+- Measured: home page ready in 1.06 s on first start, 0.81 s after (fresh profile).
+
+## What was new in 1.2.3: a cleaner project
 
 No feature or protection changed; the same engine (Firefox 160.0) and the same `navi.exe`.
 
@@ -118,7 +138,7 @@ isolation, sandbox, Safe Browsing, CRLite, uBlock Origin and NAVI Shield stay on
 
 | File | Purpose |
 |---|---|
-| `NAVI-Setup.exe` | the installer (about 195 KB) |
+| `NAVI-Setup.exe` | the installer (about 210 KB) |
 | `SHA256SUMS.txt` | its SHA-256 hash |
 
 To check the file, open PowerShell in the download folder and type:
@@ -165,7 +185,8 @@ To run it anyway: **More info**, then **Run anyway**. Only do so if the hash mat
    checked byte for byte with SHA-256) and the `navi-branding\` folder (name and logos). Then it makes `navi.exe`
    (see "navi.exe") and records its SHA-256.
 10. It creates the **NAVI** shortcut (to `navi.exe`) on the Desktop, in the Start menu and in the install folder, with the NAVI icon and
-    NAVI's Windows identity (so a pinned taskbar item is called NAVI). It does **not** make NAVI the default browser.
+    NAVI's Windows identity (so a pinned taskbar item is called NAVI). It registers NAVI with Windows as a
+    browser (Default apps, "Open with", Installed apps) without ever making it the default.
 11. It registers the Claude bridge in `HKCU\Software\Mozilla\NativeMessagingHosts\navi_bridge` (your account's key, no
     admin rights) and tells you whether Python 3 is present.
 
@@ -228,8 +249,9 @@ Windows shows a program's **file description**; `firefox.exe`'s is "Firefox". To
    signature of the installer and of the extracted files);
 2. makes a copy, `engine\navi.exe`, and rewrites **only** its version strings `FileDescription`, `ProductName` (NAVI),
    `InternalName` (navi), `OriginalFilename` (navi.exe) and its main icon, with the Windows API
-   `BeginUpdateResource` / `UpdateResource` / `EndUpdateResource`. Code, other resources, version number, `CompanyName`
-   (Mozilla Corporation) and copyright are unchanged;
+   `BeginUpdateResource` / `UpdateResource` / `EndUpdateResource`. Code, other resources and version number are
+   unchanged; since 1.2.4, `CompanyName` (WeirdWired), product version, copyright and manifest are NAVI's too (Mozilla's
+   Gecko engine is still credited);
 3. **the trade-off**: a modified file can no longer carry Mozilla's signature. The certificate is removed (a broken
    signature would be worse), so `navi.exe` is **unsigned**. The installer records its SHA-256 and the source
    `firefox.exe`'s in `engine\navi.exe.sha256` and checks them again at every install or update. The same
@@ -328,7 +350,8 @@ A Firefox version older than the installed one is refused.
 
 ## Uninstall
 
-With NAVI closed, open PowerShell and type (with your install folder):
+Windows Settings > Apps > Installed apps > **NAVI** > Uninstall. Or, with NAVI closed, in PowerShell (with your install
+folder):
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\NAVI\build\uninstall-windows.ps1"
